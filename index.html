@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta
+      name="description"
+      content="Web site created using create-react-app"
+    />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    
+    <title>React App</title>
+  </head>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    form {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    input[type="text"] {
+      width: 200px;
+      padding: 5px;
+      margin-bottom: 10px;
+    }
+
+    input[type="button"] {
+      padding: 5px 10px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      margin-bottom: 10px;
+    }
+
+    p {
+      margin: 0;
+    }
+
+    #Values1,
+    #Values2 {
+      margin-bottom: 20px;
+    }
+
+    #button1 {
+      margin-bottom: 20px;
+    }
+  </style>
+
+  <body id="bodyID">
+    <form id="myForm">
+        <label for="quantity">Quantity of refueling in liters:</label>
+        <input type="text" id="quantity" name="quantity"><br><br>
+
+        <label for="price">Price of refueling:</label>
+        <input type="text" id="price" name="price"><br><br>
+
+        <label for="  ">Distance driven with refueling in kilometers:</label>
+        <input type="text" id="distance" name="distance"><br><br>
+
+        <label for="carName">Name of car that was refueled:</label>
+        <input type="text" id="carName" name="carName"><br><br>
+
+        <input type="button" value="Submit">
+    </form>
+    <ul id="listlist"></ul>   
+    <div>
+        <p id="Values1"></p>
+    </div>
+    <div>
+        <p id="Values2"></p>
+    </div>
+    <button id="button1">Add Refueling Expense</button>
+
+    <script>
+      // pieces of the puzzle
+      let list = document.querySelector('#listlist');
+      let listmagic = [];
+    
+      let p1 = document.querySelector('#Values1');
+      let p2 = document.querySelector('#Values2');
+    
+      //value setups
+      let TotalExpenses = 0;
+      let TotalDistance = 0;
+      let TotalConsumption = 0;
+      let Consumption = 0;
+      let cars = {}; // Initialize the 'cars' object
+    
+      function submitForm() {
+  const quantity = document.getElementById("quantity").value;
+  const price = document.getElementById("price").value;
+  const distance = document.getElementById("distance").value;
+  const carName = document.getElementById("carName").value;
+
+          // error handling
+  try {
+    if (!quantity || !price || !distance || !carName) {
+      throw new Error("All fields must be filled.");
+    }
+
+    if (!/^\d+(\.\d+)?$/.test(quantity)) {
+      throw new Error("Quantity must be a valid number.");
+    }
+
+    if (!/^\d+(\.\d+)?$/.test(price)) {
+      throw new Error("Price must be a valid number.");
+    }
+
+    if (!/^\d+(\.\d+)?$/.test(distance)) {
+      throw new Error("Distance must be a valid number.");
+    }
+
+    if (!/^[a-zA-Z\s]+$/.test(carName)) {
+      throw new Error("Car name must contain only letters and spaces.");
+    }
+
+    // List item is this.
+    const refuelingData = {
+      quantity: parseFloat(quantity),
+      price: parseFloat(price),
+      distance: parseFloat(distance),
+      carName: carName.trim()
+    };
+    // Updates the list.
+    listmagic.push(refuelingData);
+
+    // Run the calculate everything and display.
+    calculateEverything();
+    generateListView();
+  } catch (error) {
+    console.error("Error:", error.message);
+  }
+}
+      function calculateEverything() {
+    for (const refueling of listmagic) {
+        TotalExpenses += refueling.quantity * refueling.price;
+        TotalConsumption += parseInt(refueling.quantity, 10);
+        TotalDistance += parseInt(refueling.distance, 10);
+
+        // Check if the car name already exists in the 'cars' object
+        if (!cars.hasOwnProperty(refueling.carName)) {
+            // If it doesn't exist, create a new entry for the car
+            cars[refueling.carName] = {
+                TotalExpenses: 0,
+                TotalConsumption: 0,
+                TotalDistance: 0
+            };
+        }
+
+        // Update the car-specific properties
+        cars[refueling.carName].TotalExpenses += refueling.quantity * refueling.price;
+        cars[refueling.carName].TotalConsumption += parseInt(refueling.quantity, 10);
+        cars[refueling.carName].TotalDistance += parseInt(refueling.distance, 10);
+    }
+
+    // Calculate and display overall statistics
+    const avgExpensesPer100km = (TotalExpenses / TotalDistance) * 100 + "€";
+    const avgConsumptionPer100km = (TotalConsumption / TotalDistance) * 100 + "l";
+
+    // Update paragraph 1 
+    p1.innerHTML = `Total expenses: ${TotalExpenses} €<br>
+    Average expenses per 100 km: ${avgExpensesPer100km}<br><br>` +
+        `Total distance: ${TotalDistance} km<br>
+    Total consumption: ${TotalConsumption} l<br>
+    Average consumption per 100 km: ${avgConsumptionPer100km}`;
+
+    // Update paragraph 2 
+    p2.innerHTML = "";
+
+    // Calculate and display car-specific statistics
+    for (const car in cars) {
+        const carData = cars[car];
+        const carAvgConsumption = (carData.TotalConsumption / carData.TotalDistance) * 100;
+        const carAvgExpensesPer100km = (carData.TotalExpenses / carData.TotalDistance) * 100 + "€";
+        p2.innerHTML += `${car}:<br>
+            Total expenses: ${carData.TotalExpenses} €<br>
+            Total distance: ${carData.TotalDistance} km<br>
+            Total consumption: ${carData.TotalConsumption} l<br>
+            Average consumption per 100 km: ${carAvgConsumption} l<br>
+            Average expenses per 100 km: ${carAvgExpensesPer100km}<br><br>`;
+    }
+}
+
+    function generateListView() {
+        list.innerHTML = "";
+        for (const refueling of listmagic) {
+            const listItem = document.createElement('li');
+
+            const quantityListItem = document.createElement('p');
+            quantityListItem.innerHTML = `Quantity: ${refueling.quantity} l`;
+
+            const priceListItem = document.createElement('p');
+            priceListItem.innerHTML = `Price: ${refueling.price} €`;
+
+            const distanceListItem = document.createElement('p');
+            distanceListItem.innerHTML = `Distance: ${refueling.distance} km`;
+
+            const carNameListItem = document.createElement('p');
+            carNameListItem.innerHTML = `Car Name: ${refueling.carName}`;
+
+            listItem.appendChild(quantityListItem);
+            listItem.appendChild(priceListItem);
+            listItem.appendChild(distanceListItem);
+            listItem.appendChild(carNameListItem);
+
+            list.appendChild(listItem);
+        }
+    }
+
+    // Set up the button event listener
+    window.onload = function () {
+        let button = document.querySelector('#button1');
+        button.addEventListener('click', function () {
+            submitForm();
+        });
+    };
+</script>
+</html>
